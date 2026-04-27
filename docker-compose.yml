@@ -1,0 +1,26 @@
+services:
+  master:
+    build:
+      context: .
+    image: mpi-hist-c:latest
+    container_name: mpi-master
+    hostname: master
+    volumes:
+      - ./:/workspace
+    working_dir: /workspace
+
+  worker1:
+    image: mpi-hist-c:latest
+    container_name: mpi-worker1
+    hostname: worker1
+    volumes:
+      - ./:/workspace
+    working_dir: /workspace
+
+  worker2:
+    image: mpi-hist-c:latest
+    container_name: mpi-worker2
+    hostname: worker2
+    volumes:
+      - ./:/workspace
+    working_dir: /workspace
