@@ -35,6 +35,7 @@ static uint32_t xorshift32(uint32_t *state) {
 
 int main(int argc, char **argv) {
     if (argc < 7) {
+        // Runs like this: ./generate_matrices data 100 256 256 3 42
         fprintf(stderr, "Usage: %s <output_dir> <count> <rows> <cols> <channels(1|3)> <seed>\n", argv[0]);
         return 1;
     }
@@ -65,7 +66,7 @@ int main(int argc, char **argv) {
     uint32_t rng = seed ? seed : 123456789u;
     for (int i = 0; i < count; i++) {
         for (uint64_t j = 0; j < bytes; j++) {
-            buffer[j] = (uint8_t)(xorshift32(&rng) & 0xFFu);
+            buffer[j] = (uint8_t)(xorshift32(&rng) & 0xFFu); // Generates random values between 0 and 255
         }
         char path[1024];
         snprintf(path, sizeof(path), "%s/matrix_%07d.bin", output_dir, i);
@@ -79,7 +80,7 @@ int main(int argc, char **argv) {
         h.rows = rows;
         h.cols = cols;
         h.channels = channels;
-        if (fwrite(&h, sizeof(h), 1, f) != 1 || fwrite(buffer, 1, (size_t)bytes, f) != (size_t)bytes) {
+        if (fwrite(&h, sizeof(h), 1, f) != 1 || fwrite(buffer, 1, (size_t)bytes, f) != (size_t)bytes) { // Write the header h then write the matrix content from buffer
             fprintf(stderr, "Failed writing matrix file %s\n", path);
             fclose(f);
             free(buffer);
@@ -92,3 +93,4 @@ int main(int argc, char **argv) {
     printf("Generated %d matrix files in %s\n", count, output_dir);
     return 0;
 }
+// .bin file looks like this in memory: [MatrixHeader][pixel bytes...]

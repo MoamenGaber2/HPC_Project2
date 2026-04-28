@@ -11,15 +11,17 @@
 #include "string_list.h"
 
 int main(int argc, char **argv) {
-    MPI_Init(&argc, &argv);
+    MPI_Init(&argc, &argv); // This starts the MPI environment
     int rank, size;
     double start_time = 0.0;
     double end_time = 0.0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);   
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank); // Get the process rank (rank = id)
+    MPI_Comm_size(MPI_COMM_WORLD, &size); // Get the total number of processes (size = total number of processes)
 
     if (argc < 4) {
         if (rank == 0) {
+            // ./mpi_histogram input_data 16 results/output.jsonl
+            // look in input_data, histogram bin width = 16, save results to results/output.jsonl
             fprintf(stderr, "Usage: %s <input_dir> <window_size> <output_file>\n", argv[0]);
             fprintf(stderr, "Input files are .bin matrices with header {u32 rows, u32 cols, u8 channels} then uint8 payload.\n");
         }
@@ -38,7 +40,7 @@ int main(int argc, char **argv) {
     }
 
     int bins = (256 + window_size - 1) / window_size;
-    int hist_len = bins * bins * bins;
+    int hist_len = bins * bins * bins; // Total number of pins
 
     StringList files;
     list_init(&files);
@@ -61,7 +63,7 @@ int main(int argc, char **argv) {
             return 1;
         }
     }
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD); // Makes all ranks wait until setup is done
     start_time = MPI_Wtime();
 
     char part_file[PATH_MAX];
@@ -76,7 +78,7 @@ int main(int argc, char **argv) {
 
     int local_count = 0;
     for (int i = rank; i < files.count; i += size) {
-        uint64_t *hist = (uint64_t *)calloc((size_t)hist_len, sizeof(uint64_t));
+        uint64_t *hist = (uint64_t *)calloc((size_t)hist_len, sizeof(uint64_t)); // Allocate histogram memory and initialize it to zero
         if (!hist) {
             fprintf(stderr, "Rank %d out of memory for histogram.\n", rank);
             fclose(out);
@@ -85,7 +87,7 @@ int main(int argc, char **argv) {
             return 1;
         }
         uint64_t pixels = 0;
-        int rc = process_file_hist(files.items[i], window_size, hist, bins, &pixels);
+        int rc = process_file_hist(files.items[i], window_size, hist, bins, &pixels); // Reads the file and fills the histogram
         if (rc != 0) {
             fprintf(stderr, "Rank %d failed to process file: %s\n", rank, files.items[i]);
             free(hist);
@@ -102,7 +104,7 @@ int main(int argc, char **argv) {
     if (rank == 0) {
         all_counts = (int *)malloc((size_t)size * sizeof(int));
     }
-    MPI_Gather(&local_count, 1, MPI_INT, all_counts, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&local_count, 1, MPI_INT, all_counts, 1, MPI_INT, 0, MPI_COMM_WORLD); // Sends each output to rank0 to collect
     MPI_Barrier(MPI_COMM_WORLD);
 
     if (rank == 0) {

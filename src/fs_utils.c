@@ -5,6 +5,8 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+
+// Support both windows and linux
 #ifdef _WIN32
 #include <direct.h>
 #include <windows.h>
@@ -22,6 +24,7 @@ static int ends_with_bin(const char *name) {
     return n >= 4 && strcmp(name + n - 4, ".bin") == 0;
 }
 
+// Scan through a directory and subdirectory recursively and add .bin file paths to output list
 void scan_dir_recursive(const char *dir_path, StringList *out) {
 #ifdef _WIN32
     char pattern[PATH_MAX];
@@ -62,7 +65,7 @@ void scan_dir_recursive(const char *dir_path, StringList *out) {
     }
     struct dirent *ent;
     while ((ent = readdir(d)) != NULL) {
-        if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0) {
+        if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0) { // Skip . and .. directories
             continue;
         }
         char full[PATH_MAX];
@@ -70,13 +73,13 @@ void scan_dir_recursive(const char *dir_path, StringList *out) {
         if (written < 0 || written >= (int)sizeof(full)) {
             continue;
         }
-        struct stat st;
+        struct stat st; // Asks OS for information about the path
         if (stat(full, &st) != 0) {
             continue;
         }
-        if (S_ISDIR(st.st_mode)) {
+        if (S_ISDIR(st.st_mode)) { // Goes deeper into subfolders (Recursive part)
             scan_dir_recursive(full, out);
-        } else if (S_ISREG(st.st_mode) && ends_with_bin(ent->d_name)) {
+        } else if (S_ISREG(st.st_mode) && ends_with_bin(ent->d_name)) { // File ending in .bin just add it
             list_push(out, full);
         }
     }
@@ -84,12 +87,14 @@ void scan_dir_recursive(const char *dir_path, StringList *out) {
 #endif
 }
 
+// Used with qsort to sort the files alphabitically
 int cmp_str_ptr(const void *a, const void *b) {
     const char *sa = *(const char *const *)a;
     const char *sb = *(const char *const *)b;
     return strcmp(sa, sb);
 }
 
+// Makes sure a path is a directory
 int ensure_dir(const char *path) {
     struct stat st;
     if (stat(path, &st) == 0) {

@@ -4,15 +4,17 @@
 #include <stdlib.h>
 #include <string.h>
 
+// Start with an empty list
 void list_init(StringList *list) {
     list->items = NULL;
     list->count = 0;
     list->cap = 0;
 }
 
+// Add one string to the list
 void list_push(StringList *list, const char *s) {
-    if (list->count == list->cap) {
-        int new_cap = list->cap == 0 ? 256 : list->cap * 2;
+    if (list->count == list->cap) { // Check whether resizing of the dynamic string array is needed
+        int new_cap = list->cap == 0 ? 256 : list->cap * 2; // Start with a capacity of 256 and doulbe it every increase
         char **new_items = (char **)realloc(list->items, (size_t)new_cap * sizeof(char *));
         if (!new_items) {
             fprintf(stderr, "Out of memory while expanding file list.\n");
@@ -31,6 +33,7 @@ void list_push(StringList *list, const char *s) {
     list->count++;
 }
 
+// Free all memory used by the list
 void list_free(StringList *list) {
     for (int i = 0; i < list->count; i++) {
         free(list->items[i]);

@@ -4,6 +4,7 @@
 
 #include "common.h"
 
+// Used to print line by line JSON objects
 int write_histogram_record(FILE *out, const char *file_name, uint64_t pixels, int bins, const uint64_t *hist, int hist_len) {
     if (!out || !file_name || !hist || hist_len <= 0) {
         return -1;
@@ -12,7 +13,7 @@ int write_histogram_record(FILE *out, const char *file_name, uint64_t pixels, in
     fprintf(out, "{\"file\":\"%s\",\"pixels\":%llu,\"bins_per_channel\":%d,\"histogram\":[",
             file_name, (unsigned long long)pixels, bins);
     for (int h = 0; h < hist_len; h++) {
-        if (h) {
+        if (h) { // Prevents printing a comma before the first element
             fputc(',', out);
         }
         fprintf(out, "%llu", (unsigned long long)hist[h]);
@@ -21,6 +22,7 @@ int write_histogram_record(FILE *out, const char *file_name, uint64_t pixels, in
     return 0;
 }
 
+// Combines all rank object files into 1 final result file
 int merge_rank_part_files(const char *parts_dir, const char *output_file, int size) {
     FILE *final = fopen(output_file, "w");
     if (!final) {
@@ -34,6 +36,8 @@ int merge_rank_part_files(const char *parts_dir, const char *output_file, int si
         if (!src) {
             continue;
         }
+
+        // Read line by line and merge into the final file
         char line[8192];
         while (fgets(line, sizeof(line), src)) {
             fputs(line, final);
